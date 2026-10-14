@@ -1,7 +1,21 @@
 {
-    auto_https off
+	auto_https off
+	# Run zen_free_tier before reverse_proxy so it edits the request first.
+	order zen_free_tier before reverse_proxy
 }
 
 :80 {
-    reverse_proxy https://opencode.ai
+	request_body {
+		max_size 64MB
+	}
+
+	# ZEN_SESSION_ID: a registered session id from `opencode session list`.
+	# Caddy will not start if it is missing or malformed.
+	zen_free_tier {
+		session_id {$ZEN_SESSION_ID}
+	}
+
+	# HTTPS upstreams get the correct Host header by default. Add
+	# `header_up Host {upstream_hostport}` only for an http:// upstream.
+	reverse_proxy {$ZEN_UPSTREAM:https://opencode.ai}
 }
